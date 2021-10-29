@@ -10,13 +10,55 @@ from IPython.display import display, Markdown, HTML
 import numpy as np
 import pickle
 import copy
-import cdsw
 import os
 import json
 
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
+
+### initiate model
+## nnlm tensorhub 128 normalized
+def build_nnlm_classifier():
+    model = keras.Sequential()
+    model.add(hub.KerasLayer('https://tfhub.dev/google/tf2-preview/nnlm-en-dim128-with-normalization/1', output_shape=[128], input_shape=[], dtype=tf.string))
+    model.add(keras.layers.Dense(16, activation='relu'))
+    model.add(keras.layers.Dense(5, activation='sigmoid'))
+
+    model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
+    return model
+
+def build_classifier_model():
+    text_input = tf.keras.layers.Input(shape=(), dtype=tf.string, name='text')
+    preprocessing_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3", name='preprocessing')
+    encoder_inputs = preprocessing_layer(text_input)
+    encoder = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/4", trainable=True, name='BERT_encoder')
+    outputs = encoder(encoder_inputs)
+    net = outputs['pooled_output']
+    net = tf.keras.layers.Dense(5, activation='sigmoid', name='classifier')(net)
+    model = tf.keras.Model(text_input, net)
+    model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
+    return model
+
+def build_basic_neural_net_model():
+    model = keras.Sequential()
+    model.add(keras.layers.Dense(16, activation='relu'))
+    model.add(keras.layers.Dense(4, activation='sigmoid'))
+    
+    model.compile(optimizer= 'adam', loss= 'binary_crossentropy')
+    return model
+
+###
+
+
+model_dict = {'random_forest':RandomForestClassifier(random_state=173),
+              'support_vector_machine':SVC(random_state=173, probability=True),
+              'k_nearest_neighbor':KNeighborsClassifier(),
+              'nnlm_128_hub': build_nnlm_classifier(),
+              'bert': build_classifier_model(),
+              'neural_net': build_basic_neural_net_model()
+             }
+
     
 class Combee:
     """class that represents one Model"""
@@ -118,9 +160,6 @@ class Combee:
         self.metrics= pd.DataFrame(self.metrics, index=[1])
         
 class CombeeKeras(Combee):
-    def __init(self):
-        pass
-    
     def execute(self):
         print('training model')
         self.train()
@@ -130,7 +169,7 @@ class CombeeKeras(Combee):
         self.compute_metrics()
         
     def train(self):
-        self.model.fit(self.X_train, self.y_train, epochs=10)
+        self.model.fit(self.X_train, self.y_train, epochs=500)
         self.prediction = self.model.predict(self.X_test)
         
     def compute_general_info(self):
@@ -242,7 +281,7 @@ class Vespiqueen:
     def train_models(self, model_wanted):
         for model in model_wanted:
             #hard coded untuk conditional model mappingnya
-            if 'hub' in model:
+            if 'neural' in model:
                 model_instance = CombeeKeras(model_name=model, X_train=self.X_train, X_test=self.X_test, y_train=self.y_train, y_test=self.y_test)
             else:
                 model_instance = Combee(model_name=model, X_train=self.X_train, X_test=self.X_test, y_train=self.y_train, y_test=self.y_test)
