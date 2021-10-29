@@ -10,6 +10,7 @@ from IPython.display import display, Markdown, HTML
 import numpy as np
 import pickle
 import copy
+import cdsw
 import os
 import json
 
@@ -140,14 +141,23 @@ beehive = []
 class Vespiqueen:
     """class for holding data, its transformation/features, and clustering model"""
     # create method to initialize load, and easier process if add attribute in save
-    def __init__(self, dataframe= None, dataset_name=None, selected_columns=None, folder_name=None):
+    def __init__(self, dataset_name, dataframe= None, selected_columns=None, folder_name=None):
         """
         dataframe: dataframe object
         dataset_name: dataset_name.csv
         selected_columns: all columns used in this experiment
         folder_name: folder name for output
         """
-        self.original_df = dataframe
+        
+        self.initiate_constructor(dataframe= dataframe, dataset_name=dataset_name, selected_columns=selected_columns, folder_name=folder_name)
+        beehive.append(self)
+        print("Vespiqueen object created and appended to beehive")
+    
+    def initiate_constructor(self, dataset_name, dataframe= None, selected_columns=None, folder_name=None, models=[],missing_dropped=False,normalized=False,standardized=False, target_col=None):
+        try:
+            self.original_df = pd.read_csv(dataset_name)
+        except:
+            self.original_df = dataframe
         self.df = copy.deepcopy(self.original_df)
         self.folder_name = folder_name
         self.dataset_name = dataset_name
@@ -167,9 +177,7 @@ class Vespiqueen:
         self.missing_dropped = False
         self.normalized = False
         self.standardized = False
-    
-        beehive.append(self)
-        print("Vespiqueen object created and appended to beehive")
+
         
     def remove_column_with_full_na(self):
         """remove column that has no value"""
@@ -290,20 +298,7 @@ class Vespiqueen:
         with open(folder_name + '/profile.txt') as json_file:
             data = json.load(json_file)
             
-            self.standardized = data['standardized']
-            self.normalized = data['normalized']
-            self.missing_dropped = data['missing_dropped']
-            self.target_col = data['target_col']
-            self.selected_columns = data['selected_columns']
-            df = pd.read_csv(data['dataset_name'])
-            self.original_df = df
-            self.df = copy.deepcopy(self.original_df)
-            self.name = data['folder_name']
-            self.df = self.df[self.selected_columns]
-            self.X_train = 'loaded model has no xy-traintest'
-            self.X_test = 'loaded model has no xy-traintest'
-            self.y_train = 'loaded model has no xy-traintest'
-            self.y_test = 'loaded model has no xy-traintest'
+            self.initiate_constructor(dataset_name=data['dataset_name'], selected_columns=data['selected_columns'], folder_name= data['folder_name'], target_col= data['target_col'], standardized=data['standardized'], normalized=data['normalized'], missing_dropped=data['missing_dropped'])
             
         files = os.listdir(folder_name)
     
