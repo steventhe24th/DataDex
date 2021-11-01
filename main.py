@@ -24,6 +24,70 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 
+
+def unpack(df,tag_list):
+"""todo: remove tag list, get from column label"""
+
+    #validate if folder exist, else create
+  try:
+      os.listdir('dataset')
+  except:
+    os.mkdir('dataset')
+    os.mkdir('dataset/train')
+    os.mkdir('dataset/test')
+
+    for tag in tag_list:
+      os.mkdir(f'dataset/train/{tag}')
+      os.mkdir(f'dataset/test/{tag}')
+
+  for tag in tag_list:
+    temp = df[df['label'] == tag]['text']#self.df
+    for i in range(len(temp)):
+      random_probability = random.random()
+      if random_probability > 0.3:
+        f = open(f"dataset/train/{tag}/{i}.txt", "w")
+        f.write(temp.iloc[i])
+        f.close()
+      else:
+        f = open(f"dataset/test/{tag}/{i}.txt", "w")
+        f.write(temp.iloc[i])
+        f.close()
+
+def load_file(path, label_list):
+  """
+  expected file structure: 
+    folder:
+      label_a/
+      label_b/
+      label_z/
+  """
+  df = pd.DataFrame()
+  for label in label_list:
+      source = path + '/' + label
+      files = os.listdir(source)
+      
+      temp_df = pd.DataFrame()
+      string_list = []
+      for file in files:
+        try:
+          f = open(source+'/'+file, "r")
+          string = f.read()
+          string = nlp(string)
+          for sent in string.sents:
+            string_list.append(sent.lemma_)
+          f.close()
+        except:
+          print(file)
+      print(string_list)
+      print(len(string_list))
+      temp_df['text'] = string_list
+      temp_df['label'] = i
+
+      df= df.append(temp_df)
+    return df #self.df = df
+
+
+
 ### initiate model
 ## nnlm tensorhub 128 normalized
 def build_nnlm_classifier():
@@ -56,7 +120,6 @@ def build_basic_neural_net_model():
     return model
 
 ###
-
 
 model_dict = {'random_forest':RandomForestClassifier(random_state=173),
               'support_vector_machine':SVC(random_state=173, probability=True),
