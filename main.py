@@ -8,6 +8,7 @@ from sklearn.metrics import accuracy_score,precision_score, recall_score, f1_sco
 from sklearn.metrics import mean_squared_error
 from IPython.display import display, Markdown, HTML
 
+import spacy 
 import numpy as np
 import pickle
 import copy
@@ -15,6 +16,9 @@ import os
 import json
 
 import tensorflow as tf
+import tensorflow_hub as hub
+import tensorflow_text as text
+from official.nlp import optimization
 from tensorflow import keras
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
