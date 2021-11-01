@@ -7,12 +7,15 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score,precision_score, recall_score, f1_score
 from sklearn.metrics import mean_squared_error
 from IPython.display import display, Markdown, HTML
+
 import numpy as np
 import pickle
 import copy
 import os
 import json
 
+import tensorflow as tf
+from tensorflow import keras
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -169,7 +172,7 @@ class CombeeKeras(Combee):
         self.compute_metrics()
         
     def train(self):
-        self.model.fit(self.X_train, self.y_train, epochs=500)
+        self.model.fit(self.X_train, self.y_train, epochs=3, batch_size=100)
         self.prediction = self.model.predict(self.X_test)
         
     def compute_general_info(self):
