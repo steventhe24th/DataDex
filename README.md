@@ -1,4 +1,4 @@
-# Beehive
+# DataDex
 A framework for feature exploration in Data Science
 
 ## Background
