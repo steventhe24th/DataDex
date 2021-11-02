@@ -18,73 +18,94 @@ import json
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_text as text
-from official.nlp import optimization
 from tensorflow import keras
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 
 
-def unpack(df,tag_list):
-"""todo: remove tag list, get from column label"""
+class Diglett:
+    def __init__(self, dataframe= None, target_col= None, file_folder = None):
+        self.df = dataframe
+        self.target_col = target_col
+        if dataframe is not None:
+            self.columns = self.df.columns
+            self.categorical_col = self.df.select_dtypes(include=['object']).columns
+            self.numerical_col = self.df.select_dtypes(include=['float64','int64']).columns
+            self.data_col = self.df.drop(columns=[self.target_col])
+            self.target_values = self.df[target_col].drop_duplicates().values
+            self.datetime_col = None
+        else:
+            print('dataset is found empty. if data is folder-based, call load_file()')
+            
+        
 
-    #validate if folder exist, else create
-  try:
-      os.listdir('dataset')
-  except:
-    os.mkdir('dataset')
-    os.mkdir('dataset/train')
-    os.mkdir('dataset/test')
-
-    for tag in tag_list:
-      os.mkdir(f'dataset/train/{tag}')
-      os.mkdir(f'dataset/test/{tag}')
-
-  for tag in tag_list:
-    temp = df[df['label'] == tag]['text']#self.df
-    for i in range(len(temp)):
-      random_probability = random.random()
-      if random_probability > 0.3:
-        f = open(f"dataset/train/{tag}/{i}.txt", "w")
-        f.write(temp.iloc[i])
+    def write_to_text(self, path, tag,file_name, text):
+        """given text name and label create file and write"""
+        f = open(f"{path}/{tag}/{file_name}.txt", "w")
+        f.write(text)
         f.close()
-      else:
-        f = open(f"dataset/test/{tag}/{i}.txt", "w")
-        f.write(temp.iloc[i])
-        f.close()
+        
+    def unpack_train_test(self, random_threshold = 0.3):
+        """given a dataframe, create file-based train test"""
 
-def load_file(path, label_list):
-  """
-  expected file structure: 
-    folder:
-      label_a/
-      label_b/
-      label_z/
-  """
-  df = pd.DataFrame()
-  for label in label_list:
-      source = path + '/' + label
-      files = os.listdir(source)
-      
-      temp_df = pd.DataFrame()
-      string_list = []
-      for file in files:
+        #validate if folder exist, else create
+        base_folder = 'dataset'
+        train_path = f'{base_folder}/train'
+        t_path = f'{base_folder}/test'
         try:
-          f = open(source+'/'+file, "r")
-          string = f.read()
-          string = nlp(string)
-          for sent in string.sents:
-            string_list.append(sent.lemma_)
-          f.close()
+            os.listdir(base_folder)
         except:
-          print(file)
-      print(string_list)
-      print(len(string_list))
-      temp_df['text'] = string_list
-      temp_df['label'] = i
+            os.mkdir(base_folder)
+            os.mkdir(train_path)
+            os.mkdir(test_path)
 
-      df= df.append(temp_df)
-    return df #self.df = df
+        for tag in self.target_values:
+            os.mkdir(f'{train_path}/{tag}')
+            os.mkdir(f'{test_path}/{tag}')
+
+            X_values = self.df[self.df[self.target_col] == tag][self.data_col]
+            for i in range(len(X_values)):
+                random_probability = random.random()
+                if random_probability > random_threshold:
+                    self.write(train_path,tag,i,X_values.iloc[i])
+                else:
+                    self.write(test_path,tag,i,X_values.iloc[i])
+
+    def load_file(self, path, label_list):
+        """
+        load folder transform to dataframe
+        expected file structure: 
+        folder:
+        label_a/
+        label_b/
+        label_z/
+        """
+        nlp = spacy.load("en_core_web_sm")
+        df = pd.DataFrame()
+        for label in label_list:
+            source = path + '/' + label
+            files = os.listdir(source)
+
+            temp_df = pd.DataFrame() #temporary dataframe to hold each folder files, to be appended to df
+            string_list = []
+            for file in files:
+                try:
+                    f = open(source+'/'+file, "r")
+                    string = f.read()
+                    string = nlp(string)
+                    for sent in string.sents:
+                        if sent.lemma_ != '':
+                            string_list.append(sent.lemma_)
+                    f.close()
+                except Exception as e:
+                    print(file, e)
+            print(len(string_list))
+            temp_df['text'] = string_list
+            temp_df['label'] = label
+
+            df= df.append(temp_df)
+        self.df = df
 
 
 
