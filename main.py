@@ -126,6 +126,7 @@ def build_nnlm_classifier():
     model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
     return model
 
+## bert model tensorhub
 def build_classifier_model():
     text_input = tf.keras.layers.Input(shape=(), dtype=tf.string, name='text')
     preprocessing_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3", name='preprocessing')
@@ -138,6 +139,7 @@ def build_classifier_model():
     model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
     return model
 
+#basic neural net
 def build_basic_neural_net_model():
     model = keras.Sequential()
     model.add(keras.layers.Dense(16, activation='relu'))
