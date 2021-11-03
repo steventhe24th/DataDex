@@ -1,14 +1,4 @@
 import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score,precision_score, recall_score, f1_score
-from sklearn.metrics import mean_squared_error
-from IPython.display import display, Markdown, HTML
-
-import spacy 
 import numpy as np
 import pickle
 import copy
@@ -17,11 +7,27 @@ import json
 
 import tensorflow as tf
 import tensorflow_hub as hub
-import tensorflow_text as text
 from tensorflow import keras
+import keras_tuner as kt
+from tensorflow.keras import optimizers
+
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
+
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score,precision_score, recall_score, f1_score
+from sklearn.metrics import mean_squared_error
+from IPython.display import display, Markdown, HTML
+
+#NLP
+import spacy 
+import tensorflow_text as text
+from sklearn.feature_extraction.text import CountVectorizer
+#NLP
 
 
 class Diglett:
