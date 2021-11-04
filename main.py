@@ -369,7 +369,7 @@ class Vespiqueen:
     def remove_column_with_full_na(self):
         """remove column that has no value"""
         col_missing_sum = self.df.isna().sum()
-        self.df = self.df.drop(columns = col_missing_sum[col_missing_sum == df.shape[0]].index)
+        self.df = self.df.drop(columns = col_missing_sum[col_missing_sum == self.df.shape[0]].index)
         print("all columns with zero values has been deleted!")
         
     def remove_any_missing_row(self):
