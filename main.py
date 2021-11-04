@@ -281,8 +281,9 @@ class Beehive:
         self.feature_list = []
         
     def show(self):  
+        """execute iteration to compute metrics, confusion matrix, and feature importances"""
         for i in self.vespiqueen_list:
-            self.name_list.append(i.folder_name)
+            self.name_list.append(i.folder_name + '| shape: ' + str(self.sum_all(i.models[0].confusion_matrix)))
             self.df_list.append(i.models[0].confusion_matrix)
             self.metric_list.append(i.models[0].metrics.values[0])
             self.feature_list.append(i.models[0].feature_importance)
@@ -291,7 +292,11 @@ class Beehive:
 
         self.display_side_by_side(self.df_list, self.name_list)
         self.display_side_by_side(self.feature_list, self.name_list)
-        
+
+    def sum_all(self, df):
+        """given a dataframe, count all values inside that dataframe"""
+        return df.apply(lambda x: sum(x), axis=1).sum()
+    
     def display_side_by_side(self,dfs:list, captions:list, tablespacing=5):
         """Display tables side by side to save vertical space
         Input:
