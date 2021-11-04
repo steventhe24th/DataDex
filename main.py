@@ -155,16 +155,7 @@ class Diglett:
 
             df= df.append(temp_df)
         self.df = df
-
-
-
-
-model_dict = {'random_forest':RandomForestClassifier(random_state=173),
-              'support_vector_machine':SVC(random_state=173, probability=True),
-              'k_nearest_neighbor':KNeighborsClassifier(),
-             }
-
-    
+   
 class Combee:
     """class that represents one Model"""
     def __init__(self, model_name= None, model_self= None, X_train= None, X_test= None, y_train= None,y_test= None):
@@ -282,7 +273,7 @@ class CombeeKeras(Combee):
 
 class Beehive:
     """class to contain all vespiqueens, and show each metrics"""
-    def __init__(self, beehive):
+    def __init__(self):
         self.vespiqueen_list = []
         self.df_list = []
         self.name_list = []
