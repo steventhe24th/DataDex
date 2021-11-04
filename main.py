@@ -279,8 +279,10 @@ class Beehive:
         self.name_list = []
         self.metric_list = []
         self.feature_list = []
+        
+    def show(self):  
         for i in self.vespiqueen_list:
-            self.name_list.append(i.name)
+            self.name_list.append(i.folder_name)
             self.df_list.append(i.models[0].confusion_matrix)
             self.metric_list.append(i.models[0].metrics.values[0])
             self.feature_list.append(i.models[0].feature_importance)
