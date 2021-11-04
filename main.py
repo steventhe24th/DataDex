@@ -31,7 +31,50 @@ import tensorflow_text as text
 from sklearn.feature_extraction.text import CountVectorizer
 #NLP
 
+### initiate model
+## nnlm tensorhub 128 normalized
+def build_nnlm_classifier():
+    model = keras.Sequential()
+    model.add(hub.KerasLayer('https://tfhub.dev/google/tf2-preview/nnlm-en-dim128-with-normalization/1', output_shape=[128], input_shape=[], dtype=tf.string))
+    model.add(keras.layers.Dense(16, activation='relu'))
+    model.add(keras.layers.Dense(5, activation='sigmoid'))
 
+    model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
+    return model
+
+## bert model tensorhub
+def build_classifier_model():
+    text_input = tf.keras.layers.Input(shape=(), dtype=tf.string, name='text')
+    preprocessing_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3", name='preprocessing')
+    encoder_inputs = preprocessing_layer(text_input)
+    encoder = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/4", trainable=True, name='BERT_encoder')
+    outputs = encoder(encoder_inputs)
+    net = outputs['pooled_output']
+    net = tf.keras.layers.Dense(5, activation='sigmoid', name='classifier')(net)
+    model = tf.keras.Model(text_input, net)
+    model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
+    return model
+
+#basic neural net
+def build_basic_neural_net_model():
+    model = keras.Sequential()
+    model.add(keras.layers.Dense(16, activation='relu'))
+    model.add(keras.layers.Dense(4, activation='sigmoid'))
+    
+    model.compile(optimizer= 'adam', loss= 'binary_crossentropy')
+    return model
+
+###
+
+model_dict = {'random_forest':RandomForestClassifier(random_state=173),
+              'support_vector_machine':SVC(random_state=173, probability=True),
+              'k_nearest_neighbor':KNeighborsClassifier(),
+              'nnlm_128_hub': build_nnlm_classifier(),
+              'bert': build_classifier_model(),
+              'neural_net': build_basic_neural_net_model()
+             }
+
+ 
 class Diglett:
     def __init__(self, dataframe= None, target_col= None, file_folder = None):
         self.df = dataframe
@@ -45,8 +88,6 @@ class Diglett:
             self.datetime_col = None
         else:
             print('dataset is found empty. if data is folder-based, call load_file()')
-            
-        
 
     def write_to_text(self, path, tag,file_name, text):
         """given text name and label create file and write"""
@@ -117,47 +158,10 @@ class Diglett:
 
 
 
-### initiate model
-## nnlm tensorhub 128 normalized
-def build_nnlm_classifier():
-    model = keras.Sequential()
-    model.add(hub.KerasLayer('https://tfhub.dev/google/tf2-preview/nnlm-en-dim128-with-normalization/1', output_shape=[128], input_shape=[], dtype=tf.string))
-    model.add(keras.layers.Dense(16, activation='relu'))
-    model.add(keras.layers.Dense(5, activation='sigmoid'))
-
-    model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
-    return model
-
-## bert model tensorhub
-def build_classifier_model():
-    text_input = tf.keras.layers.Input(shape=(), dtype=tf.string, name='text')
-    preprocessing_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3", name='preprocessing')
-    encoder_inputs = preprocessing_layer(text_input)
-    encoder = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/4", trainable=True, name='BERT_encoder')
-    outputs = encoder(encoder_inputs)
-    net = outputs['pooled_output']
-    net = tf.keras.layers.Dense(5, activation='sigmoid', name='classifier')(net)
-    model = tf.keras.Model(text_input, net)
-    model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
-    return model
-
-#basic neural net
-def build_basic_neural_net_model():
-    model = keras.Sequential()
-    model.add(keras.layers.Dense(16, activation='relu'))
-    model.add(keras.layers.Dense(4, activation='sigmoid'))
-    
-    model.compile(optimizer= 'adam', loss= 'binary_crossentropy')
-    return model
-
-###
 
 model_dict = {'random_forest':RandomForestClassifier(random_state=173),
               'support_vector_machine':SVC(random_state=173, probability=True),
               'k_nearest_neighbor':KNeighborsClassifier(),
-              'nnlm_128_hub': build_nnlm_classifier(),
-              'bert': build_classifier_model(),
-              'neural_net': build_basic_neural_net_model()
              }
 
     
@@ -275,9 +279,41 @@ class CombeeKeras(Combee):
         
     def compute_general_info(self):
         self.prepare_confusion_matrix() # sebab Keras tidak punya predict_proba atau method classes_
-        
-beehive = []
 
+class Beehive:
+    """class to contain all vespiqueens, and show each metrics"""
+    def __init__(self, beehive):
+        self.vespiqueen_list = []
+        self.df_list = []
+        self.name_list = []
+        self.metric_list = []
+        self.feature_list = []
+        for i in self.vespiqueen_list:
+            self.name_list.append(i.name)
+            self.df_list.append(i.models[0].confusion_matrix)
+            self.metric_list.append(i.models[0].metrics.values[0])
+            self.feature_list.append(i.models[0].feature_importance)
+            
+        display(pd.DataFrame(self.metric_list, columns=['Accuracy','Precision','Recall','F1 Score','Mean Squared Error'] ,index=self.name_list))
+
+        self.display_side_by_side(self.df_list, self.name_list)
+        self.display_side_by_side(self.feature_list, self.name_list)
+        
+    def display_side_by_side(self,dfs:list, captions:list, tablespacing=5):
+        """Display tables side by side to save vertical space
+        Input:
+            dfs: list of pandas.DataFrame
+            captions: list of table captions
+        source: https://stackoverflow.com/questions/38783027/jupyter-notebook-display-two-pandas-tables-side-by-side
+        """
+        output = ""
+        combined = dict(zip(captions, dfs))
+        for caption, df in combined.items():
+            output += df.style.set_table_attributes("style='display:inline'").set_caption(caption)._repr_html_()
+            output += tablespacing * "\xa0"
+        display(HTML(output))    
+        
+beehive = Beehive()   
 class Vespiqueen:
     """class for holding data, its transformation/features, and clustering model"""
     # create method to initialize load, and easier process if add attribute in save
@@ -290,7 +326,7 @@ class Vespiqueen:
         """
         
         self.initiate_constructor(dataframe= dataframe, dataset_name=dataset_name, selected_columns=selected_columns, folder_name=folder_name)
-        beehive.append(self)
+        beehive.vespiqueen_list.append(self)
         print("Vespiqueen object created and appended to beehive")
     
     def initiate_constructor(self, dataset_name, dataframe= None, selected_columns=None, folder_name=None, models=[],missing_dropped=False,normalized=False,standardized=False, target_col=None):
@@ -449,40 +485,9 @@ class Vespiqueen:
                 
         print('Vespiqueen Object Successfully Loaded!')
         
-        
-class Beehive:
-    def __init__(self, beehive):
-        self.df_list = []
-        self.name_list = []
-        self.metric_list = []
-        self.feature_list = []
-        for i in beehive:
-            self.name_list.append(i.name)
-            self.df_list.append(i.models[0].confusion_matrix)
-            self.metric_list.append(i.models[0].metrics.values[0])
-            self.feature_list.append(i.models[0].feature_importance)
-            
-        display(pd.DataFrame(self.metric_list, columns=['Accuracy','Precision','Recall','F1 Score','Mean Squared Error'] ,index=self.name_list))
-
-        self.display_side_by_side(self.df_list, self.name_list)
-        self.display_side_by_side(self.feature_list, self.name_list)
-        
-    def display_side_by_side(self,dfs:list, captions:list, tablespacing=5):
-        """Display tables side by side to save vertical space
-        Input:
-            dfs: list of pandas.DataFrame
-            captions: list of table captions
-        source: https://stackoverflow.com/questions/38783027/jupyter-notebook-display-two-pandas-tables-side-by-side
-        """
-        output = ""
-        combined = dict(zip(captions, dfs))
-        for caption, df in combined.items():
-            output += df.style.set_table_attributes("style='display:inline'").set_caption(caption)._repr_html_()
-            output += tablespacing * "\xa0"
-        display(HTML(output))
-
 # global function
 def display_full_df(df):
     """show all rows from one df"""
     display(df.style.set_table_attributes("style='display:inline'"))
+        
         
