@@ -1,78 +1,90 @@
-import pandas as pd
-import numpy as np
-import pickle
-import copy
-import os
-import json
+try:
+    import pandas as pd
+    import numpy as np
+    import pickle
+    import copy
+    import os
+    import json
 
-#tensorflow
-import tensorflow as tf
-import tensorflow_hub as hub
-from tensorflow import keras
-import keras_tuner as kt
-from tensorflow.keras import optimizers
-#tensorflow
+    from sklearn.svm import SVC
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.neighbors import KNeighborsClassifier
 
-from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neighbors import KNeighborsClassifier
+    from sklearn.preprocessing import LabelEncoder
+    from sklearn.preprocessing import OneHotEncoder
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import confusion_matrix
+    from sklearn.metrics import accuracy_score,precision_score, recall_score, f1_score
+    from sklearn.metrics import mean_squared_error
+    from IPython.display import display, Markdown, HTML
+except Exception as e:
+    print('core library not found. run: pip install scikit-learn pandas')
 
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score,precision_score, recall_score, f1_score
-from sklearn.metrics import mean_squared_error
-from IPython.display import display, Markdown, HTML
 
-#NLP
-import spacy 
-import tensorflow_text as text
-from sklearn.feature_extraction.text import CountVectorizer
-#NLP
-
-### initiate model
-## nnlm tensorhub 128 normalized
-def build_nnlm_classifier():
-    model = keras.Sequential()
-    model.add(hub.KerasLayer('https://tfhub.dev/google/tf2-preview/nnlm-en-dim128-with-normalization/1', output_shape=[128], input_shape=[], dtype=tf.string))
-    model.add(keras.layers.Dense(16, activation='relu'))
-    model.add(keras.layers.Dense(5, activation='sigmoid'))
-
-    model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
-    return model
-
-## bert model tensorhub
-def build_classifier_model():
-    text_input = tf.keras.layers.Input(shape=(), dtype=tf.string, name='text')
-    preprocessing_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3", name='preprocessing')
-    encoder_inputs = preprocessing_layer(text_input)
-    encoder = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/4", trainable=True, name='BERT_encoder')
-    outputs = encoder(encoder_inputs)
-    net = outputs['pooled_output']
-    net = tf.keras.layers.Dense(5, activation='sigmoid', name='classifier')(net)
-    model = tf.keras.Model(text_input, net)
-    model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
-    return model
-
-#basic neural net
-def build_basic_neural_net_model():
-    model = keras.Sequential()
-    model.add(keras.layers.Dense(16, activation='relu'))
-    model.add(keras.layers.Dense(4, activation='sigmoid'))
-    
-    model.compile(optimizer= 'adam', loss= 'binary_crossentropy')
-    return model
-
-###
+try:
+    #NLP
+    import spacy 
+    import tensorflow_text as text
+    from sklearn.feature_extraction.text import CountVectorizer
+    #NLP
+except Exception as e:
+    print(f'NLP library is not found {e}. run: pip install spacy tensorflow_text | python -m spacy download en_core_web_sm')
 
 model_dict = {'random_forest':RandomForestClassifier(random_state=173),
               'support_vector_machine':SVC(random_state=173, probability=True),
               'k_nearest_neighbor':KNeighborsClassifier(),
-              'nnlm_128_hub': build_nnlm_classifier(),
-              'bert': build_classifier_model(),
-              'neural_net': build_basic_neural_net_model()
              }
+
+try:
+    #tensorflow
+    import tensorflow as tf
+    import tensorflow_hub as hub
+    from tensorflow import keras
+    import keras_tuner as kt
+    from tensorflow.keras import optimizers
+    #tensorflow
+
+
+    ### initiate model
+    ## nnlm tensorhub 128 normalized
+    def build_nnlm_classifier():
+        model = keras.Sequential()
+        model.add(hub.KerasLayer('https://tfhub.dev/google/tf2-preview/nnlm-en-dim128-with-normalization/1', output_shape=[128], input_shape=[], dtype=tf.string))
+        model.add(keras.layers.Dense(16, activation='relu'))
+        model.add(keras.layers.Dense(5, activation='sigmoid'))
+
+        model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
+        return model
+
+    ## bert model tensorhub
+    def build_classifier_model():
+        text_input = tf.keras.layers.Input(shape=(), dtype=tf.string, name='text')
+        preprocessing_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3", name='preprocessing')
+        encoder_inputs = preprocessing_layer(text_input)
+        encoder = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/4", trainable=True, name='BERT_encoder')
+        outputs = encoder(encoder_inputs)
+        net = outputs['pooled_output']
+        net = tf.keras.layers.Dense(5, activation='sigmoid', name='classifier')(net)
+        model = tf.keras.Model(text_input, net)
+        model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
+        return model
+
+    #basic neural net
+    def build_basic_neural_net_model():
+        model = keras.Sequential()
+        model.add(keras.layers.Dense(16, activation='relu'))
+        model.add(keras.layers.Dense(4, activation='sigmoid'))
+        
+        model.compile(optimizer= 'adam', loss= 'binary_crossentropy')
+        return model
+
+    model_dict['nnlm_128_hub'] = build_nnlm_classifier()
+    model_dict['bert'] = build_classifier_model()
+    model_dict['neural_net'] = build_basic_neural_net_model() 
+    ###
+
+except Exception as e:
+    print(f'library does not exist:{}. pip install tensorflow keras_tuner')
 
  
 class Diglett:
@@ -130,6 +142,7 @@ class Diglett:
         label_b/
         label_z/
         """
+        
         nlp = spacy.load("en_core_web_sm")
         df = pd.DataFrame()
         for label in label_list:
