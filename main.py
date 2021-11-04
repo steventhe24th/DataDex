@@ -18,7 +18,7 @@ try:
     from sklearn.metrics import mean_squared_error
     from IPython.display import display, Markdown, HTML
 except Exception as e:
-    print('core library not found. run: pip install scikit-learn pandas')
+    print(f'core library not found {e}. run: pip install scikit-learn pandas')
 
 
 try:
@@ -84,7 +84,7 @@ try:
     ###
 
 except Exception as e:
-    print(f'library does not exist:{}. pip install tensorflow keras_tuner')
+    print(f'library does not exist:{e}. pip install tensorflow keras_tuner')
 
  
 class Diglett:
