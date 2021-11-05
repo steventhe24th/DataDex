@@ -18,7 +18,7 @@ try:
     from sklearn.metrics import mean_squared_error
     from IPython.display import display, Markdown, HTML
 except Exception as e:
-    print(f'[DataDex - LibError] core library not found {e}.\n please run: pip3 install scikit-learn pandas')
+    raise f'[DataDex - LibError] core library not found {e}.\n please run: pip3 install scikit-learn pandas'
 
 
 try:
@@ -29,9 +29,9 @@ try:
     from sklearn.feature_extraction.text import CountVectorizer
     #NLP
 except Exception as e:
-    print(f'[DataDex - LibError] NLP library is not found {e}.\n please run: pip3 install spacy tensorflow_text | python3 -m spacy download en_core_web_sm')
+    print(f'[DataDex - LibError] NLP library is not found {e}.\n please run: pip3 install spacy tensorflow_text | python3 -m spacy download en_core_web_sm \n. Otherwise, no NLP preprocessing.')
 
-model_dict = {'random_forest':RandomForestClassifier(random_state=173),
+MODEL_DICT = {'random_forest':RandomForestClassifier(random_state=173),
               'support_vector_machine':SVC(random_state=173, probability=True),
               'k_nearest_neighbor':KNeighborsClassifier(),
              }
@@ -80,15 +80,17 @@ try:
         return model
 
     # add the model to model dict
-    model_dict['nnlm_128_hub'] = build_nnlm_classifier()
-    model_dict['bert'] = build_classifier_model()
-    model_dict['neural_net'] = build_basic_neural_net_model() 
+    print("[Datadex - Info] setting up adventure. please wait approx. 2 minutes")
+    MODEL_DICT['nnlm_128_hub'] = build_nnlm_classifier()
+    MODEL_DICT['bert'] = build_classifier_model()
+    MODEL_DICT['neural_net'] = build_basic_neural_net_model() 
     ###
 
 except Exception as e:
     print(f'[DataDex - LibError] library does not exist:{e}.please run: pip3 install tensorflow keras_tuner.\n Otherwise, Tensorflow is not loaded and CombeeKeras is not functional.')
+finally:
+    print("[Datadex - Info] adventure is ready.")
 
- 
 class Diglett:
     def __init__(self, dataframe= None, target_col= None, file_folder = None):
         self.df = dataframe
@@ -187,13 +189,13 @@ class Combee:
     """class that represents one Model"""
     def __init__(self, model_name= None, model_self= None, X_train= None, X_test= None, y_train= None,y_test= None):
         try:
-            self.model = model_dict[model_name]
+            self.model = MODEL_DICT[model_name]
         except:
             if model_self is not None:
                 self.model = model_self
                 print('[Combee - Info] user-defined model is loaded!')
             else:
-                self.model = model_dict['random_forest']
+                self.model = MODEL_DICT['random_forest']
                 print('[Combee - Info] model request does not exist! defaulting to random_forest.')
                 
         self.model_name = model_name
@@ -441,7 +443,7 @@ class Vespiqueen:
             
     def train_models(self, model_wanted):
         """model_wanted: 
-            [0] model must be selected from model_dict
+            [0] model must be selected from MODEL_DICT
             [1] True/False -> True - uses Keras | False - uses Sklearn
         """
         for model,is_keras in model_wanted:
