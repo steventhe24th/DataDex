@@ -18,7 +18,7 @@ try:
     from sklearn.metrics import mean_squared_error
     from IPython.display import display, Markdown, HTML
 except Exception as e:
-    print(f'core library not found {e}. run: pip install scikit-learn pandas')
+    print(f'[DataDex - LibError] core library not found {e}.\n please run: pip3 install scikit-learn pandas')
 
 
 try:
@@ -28,7 +28,7 @@ try:
     from sklearn.feature_extraction.text import CountVectorizer
     #NLP
 except Exception as e:
-    print(f'NLP library is not found {e}. run: pip install spacy tensorflow_text | python -m spacy download en_core_web_sm')
+    print(f'[DataDex - LibError] NLP library is not found {e}.\n please run: pip3 install spacy tensorflow_text | python3 -m spacy download en_core_web_sm')
 
 model_dict = {'random_forest':RandomForestClassifier(random_state=173),
               'support_vector_machine':SVC(random_state=173, probability=True),
@@ -78,13 +78,14 @@ try:
         model.compile(optimizer= 'adam', loss= 'binary_crossentropy')
         return model
 
+    # add the model to model dict
     model_dict['nnlm_128_hub'] = build_nnlm_classifier()
     model_dict['bert'] = build_classifier_model()
     model_dict['neural_net'] = build_basic_neural_net_model() 
     ###
 
 except Exception as e:
-    print(f'library does not exist:{e}. pip install tensorflow keras_tuner')
+    print(f'[DataDex - LibError] library does not exist:{e}.please run: pip3 install tensorflow keras_tuner')
 
  
 class Diglett:
@@ -117,6 +118,7 @@ class Diglett:
         try:
             os.listdir(base_folder)
         except:
+            print("[Diglett - info] base folder has not yet exist. Creating the folder...  completed")
             os.mkdir(base_folder)
             os.mkdir(train_path)
             os.mkdir(test_path)
@@ -161,7 +163,7 @@ class Diglett:
                             string_list.append(sent.lemma_)
                     f.close()
                 except Exception as e:
-                    print(file, e)
+                    print(f"[Diglett - FileError] file {file} - {e} is corrupted or missing.")
             print(len(string_list))
             temp_df['text'] = string_list
             temp_df['label'] = label
@@ -177,10 +179,10 @@ class Combee:
         except:
             if model_self is not None:
                 self.model = model_self
-                print('user-defined model is loaded!')
+                print('[Combee - Info] user-defined model is loaded!')
             else:
                 self.model = model_dict['random_forest']
-                print('model request does not exist! defaulting to random_forest.')
+                print('[Combee - Info] model request does not exist! defaulting to random_forest.')
                 
         self.model_name = model_name
         self.X_train = X_train
@@ -208,13 +210,13 @@ class Combee:
         try:
             self.compute_feature_importance()
         except:
-            print(self.model_name + 'has no feature importance')
-        print('compute metrics')
+            print(f"[Combee - Info] {self.model_name} has no feature importance")
+        print('[Combee - Info] compute metrics')
         self.compute_metrics()
     
     def train(self):
         """train the model"""
-        print('training' + self.model_name)
+        print(f'[Combee - Info] training {self.model_name}')
         self.model.fit(self.X_train, self.y_train)
         self.prediction = self.model.predict(self.X_test)
 
@@ -262,7 +264,7 @@ class Combee:
                 else:
                     self.metrics[metric_key] = self.metrics_used[i](self.y_test, self.prediction)
             except:
-                print(metric_key + " failed to be computed")
+                print(f"[Combee - Info] {metric_key} failed to be computed. skipped")
                 self.metrics[metric_key] = 'metric failure.' 
 
                 
@@ -396,10 +398,11 @@ class Vespiqueen:
         print('label of:')
         print('================')
         print('y_train | y_test')
-        try:
+        if y_train.shape[1] == 1:
             print(pd.DataFrame([self.y_train.value_counts(), self.y_test.value_counts()], index=['train','test']))
-        except:
-            print("todo: print sum of 1 in each column")
+        elif y_train.shape[1] > 1:
+            print(pd.DataFrame(self.y_train, index=['train']).sum())
+            print(pd.DataFrame(self.y_test, index=['test']).sum())
         
     def transform_x(self,target_col):
         """vectorize data X"""
@@ -424,7 +427,7 @@ class Vespiqueen:
             self.df = pd.concat([self.df.reset_index(),new_label.reset_index()], axis=1)
             self.df = self.df.drop(columns=['index'])
         else:
-            print('wrong transform type')
+            print('[Vespiqueen - Error] wrong transform type')
             
     def train_models(self, model_wanted):
         for model in model_wanted:
@@ -435,8 +438,8 @@ class Vespiqueen:
                 model_instance = Combee(model_name=model, X_train=self.X_train, X_test=self.X_test, y_train=self.y_train, y_test=self.y_test)
             model_instance.execute() 
             self.models.append(model_instance)
-        print('all training completed successfully')
-        print('check result in models[i].[all_info,feature_importance,confusion_matrix,metrics]') # todo: show attribute yang not none aja disini
+        print('[Vespiqueen - Info] all training completed successfully')
+        print('[Vespiqueen - Info] check result in models[i].[all_info,feature_importance,confusion_matrix,metrics]')
 
     def save(self):  
         """save selected columns, metrics, and model"""
@@ -466,7 +469,7 @@ class Vespiqueen:
             
         for i in range(len(self.models)):
             filename = folder_name + '/model_'+str(i+1)
-            try: # for keras model
+            try:
                 pickle.dump(self.models[i], open(filename+'.sav', 'wb'))
             except: # if failed using sklearn
                 self.models[i].model = None
@@ -480,7 +483,7 @@ class Vespiqueen:
         try:
             os.listdir(folder_name)
         except:
-            print('folder does not exist! ending process.')
+            print(f'[Vespiqueen - FileError] folder {folder_name} does not exist! ending process.')
         
         with open(folder_name + '/profile.txt') as json_file:
             data = json.load(json_file)
