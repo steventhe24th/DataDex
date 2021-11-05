@@ -413,7 +413,7 @@ class Vespiqueen:
         if self.y_train.shape[1] == 1:
             print(pd.DataFrame([self.y_train.value_counts(), self.y_test.value_counts()], index=['train','test']))
         elif self.y_train.shape[1] > 1:
-            print(pd.DataFrame([temp.y_train.sum(), temp.y_test.sum()], index=['train','test']))
+            print(pd.DataFrame([self.y_train.sum(), self.y_test.sum()], index=['train','test']))
         
     def transform_x(self,target_col):
         """vectorize data X"""
