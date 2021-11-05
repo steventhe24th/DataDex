@@ -23,7 +23,8 @@ except Exception as e:
 
 try:
     #NLP
-    import spacy 
+    import spacy
+    from spacy.lang.en.stop_words import STOP_WORDS
     import tensorflow_text as text
     from sklearn.feature_extraction.text import CountVectorizer
     #NLP
@@ -160,6 +161,15 @@ class Diglett:
                     f = open(source+'/'+file, "r")
                     string = f.read()
                     string = nlp(string)
+                    filtered_sentence = []
+                    for token in string:
+                        word = token.text
+                        lexeme = nlp.vocab[word]
+                        if lexeme.is_stop == False:
+                            filtered_sentence.append(word) 
+                    
+                    string = nlp("".join(filtered_sentence))
+
                     for sent in string.sents:
                         if sent.lemma_ != '':
                             string_list.append(sent.lemma_)
