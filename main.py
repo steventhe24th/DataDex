@@ -86,7 +86,7 @@ try:
     ###
 
 except Exception as e:
-    print(f'[DataDex - LibError] library does not exist:{e}.please run: pip3 install tensorflow keras_tuner')
+    print(f'[DataDex - LibError] library does not exist:{e}.please run: pip3 install tensorflow keras_tuner.\n Otherwise, Tensorflow is not loaded and CombeeKeras is not functional.')
 
  
 class Diglett:
@@ -284,15 +284,15 @@ class Combee:
         
 class CombeeKeras(Combee):
     def execute(self):
-        print('training model')
+        print('[CombeeKeras - info] training model')
         self.train()
-        print('computing all info')
+        print('[CombeeKeras - info] computing all info')
         self.compute_general_info()
-        print('compute metrics')
+        print('[CombeeKeras - info] compute metrics')
         self.compute_metrics()
         
     def train(self):
-        self.model.fit(self.X_train, self.y_train, epochs=3, batch_size=100)
+        self.model.fit(self.X_train, self.y_train, epochs=10, batch_size=32)
         self.prediction = self.model.predict(self.X_test)
         
     def compute_general_info(self):
@@ -378,7 +378,6 @@ class Vespiqueen:
         self.missing_dropped = False
         self.normalized = False
         self.standardized = False
-
         
     def remove_column_with_full_na(self):
         """remove column that has no value"""
@@ -441,9 +440,12 @@ class Vespiqueen:
             print('[Vespiqueen - Error] wrong transform type')
             
     def train_models(self, model_wanted):
-        for model in model_wanted:
-            #hard coded untuk conditional model mappingnya
-            if 'neural' in model:
+        """model_wanted: 
+            [0] model must be selected from model_dict
+            [1] True/False -> True - uses Keras | False - uses Sklearn
+        """
+        for model,is_keras in model_wanted:
+            if is_keras == True:
                 model_instance = CombeeKeras(model_name=model, X_train=self.X_train, X_test=self.X_test, y_train=self.y_train, y_test=self.y_test)
             else:
                 model_instance = Combee(model_name=model, X_train=self.X_train, X_test=self.X_test, y_train=self.y_train, y_test=self.y_test)
