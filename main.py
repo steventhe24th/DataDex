@@ -410,9 +410,9 @@ class Vespiqueen:
         print('label of:')
         print('================')
         print('y_train | y_test')
-        if y_train.shape[1] == 1:
+        if self.y_train.shape[1] == 1:
             print(pd.DataFrame([self.y_train.value_counts(), self.y_test.value_counts()], index=['train','test']))
-        elif y_train.shape[1] > 1:
+        elif self.y_train.shape[1] > 1:
             print(pd.DataFrame(self.y_train, index=['train']).sum())
             print(pd.DataFrame(self.y_test, index=['test']).sum())
         
