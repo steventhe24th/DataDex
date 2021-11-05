@@ -99,8 +99,10 @@ class Diglett:
             self.data_col = self.df.drop(columns=[self.target_col])
             self.target_values = self.df[target_col].drop_duplicates().values
             self.datetime_col = None
-        else:
-            print('dataset is found empty. if data is folder-based, call load_file()')
+        elif dataframe is None and file_folder is None:
+            print('[Diglett - FileError] dataset is found empty. if data is folder-based, call load_file()')
+        elif file_folder is not None:
+            self.load_file(path=file_folder, label_list=os.listdir(file_folder))
 
     def write_to_text(self, path, tag,file_name, text):
         """given text name and label create file and write"""
@@ -163,7 +165,7 @@ class Diglett:
                             string_list.append(sent.lemma_)
                     f.close()
                 except Exception as e:
-                    print(f"[Diglett - FileError] file {file} - {e} is corrupted or missing.")
+                    print(f"[Diglett - FileError] file {source}-{file} is corrupted or missing. exception: {e} ")
             print(len(string_list))
             temp_df['text'] = string_list
             temp_df['label'] = label
