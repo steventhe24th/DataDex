@@ -18,7 +18,7 @@ try:
     from sklearn.metrics import mean_squared_error
     from IPython.display import display, Markdown, HTML
 except Exception as e:
-    raise f'[DataDex - LibError] core library not found {e}.\n please run: pip3 install scikit-learn pandas'
+    print(f'[DataDex - LibError] core library not found {e}.\n please run: pip3 install scikit-learn pandas')
 
 
 try:
