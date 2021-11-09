@@ -5,6 +5,7 @@ try:
     import copy
     import os
     import json
+    import random
 
     from sklearn.svm import SVC
     from sklearn.ensemble import RandomForestClassifier
@@ -119,7 +120,7 @@ class Diglett:
         #validate if folder exist, else create
         base_folder = 'dataset'
         train_path = f'{base_folder}/train'
-        t_path = f'{base_folder}/test'
+        test_path = f'{base_folder}/test'
         try:
             os.listdir(base_folder)
         except:
