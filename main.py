@@ -18,6 +18,7 @@ try:
     from sklearn.metrics import accuracy_score,precision_score, recall_score, f1_score
     from sklearn.metrics import mean_squared_error
     from IPython.display import display, Markdown, HTML
+    from sklearn.feature_extraction.text import CountVectorizer
 except Exception as e:
     print(f'[DataDex - LibError] core library not found {e}.\n please run: pip3 install scikit-learn pandas')
 
@@ -150,8 +151,7 @@ class Diglett:
         label_b/
         label_z/
         """
-        
-        nlp = spacy.load("en_core_web_sm")
+    
         df = pd.DataFrame()
         for label in label_list:
             source = path + '/' + label
@@ -163,23 +163,10 @@ class Diglett:
                 try:
                     f = open(source+'/'+file, "r")
                     string = f.read()
-                    string = nlp(string)
-                    filtered_sentence = []
-                    for token in string:
-                        word = token.text
-                        lexeme = nlp.vocab[word]
-                        if lexeme.is_stop == False:
-                            filtered_sentence.append(word) 
-                    
-                    string = nlp("".join(filtered_sentence))
-
-                    for sent in string.sents:
-                        if sent.lemma_ != '':
-                            string_list.append(sent.lemma_)
+                    string_list.append(string)
                     f.close()
                 except Exception as e:
                     print(f"[Diglett - FileError] file {source}-{file} is corrupted or missing. exception: {e} ")
-            print(len(string_list))
             temp_df['text'] = string_list
             temp_df['label'] = label
 
@@ -341,8 +328,85 @@ class Beehive:
             output += tablespacing * "\xa0"
         display(HTML(output))    
         
-beehive = Beehive()   
-class Vespiqueen:
+beehive = Beehive() 
+
+
+class VespiqueenTools:
+    def __init__(self):
+        pass
+
+    def clean(self, text):
+        nlp = spacy.load("en_core_web_sm")
+        string = nlp(text)
+        filtered_sentence = []
+        for token in string:
+            word = token.text
+            lexeme = nlp.vocab[word]
+            if lexeme.is_stop == False:
+                filtered_sentence.append(word) 
+        
+        string = nlp("".join(filtered_sentence))
+
+        clean_sentence = []
+        for sent in string.sents:
+            if sent.lemma_ != '':
+                clean_sentence.append(sent.lemma_)
+
+        return clean_sentence
+
+    def clean_text(self, col):
+        """given df, clean column specified, return series"""
+        self.df[col].apply(lambda x: self.clean(x))
+
+
+    def remove_column_with_full_na(self):
+        """remove column that has no value"""
+        col_missing_sum = self.df.isna().sum()
+        self.df = self.df.drop(columns = col_missing_sum[col_missing_sum == self.df.shape[0]].index)
+        print("all columns with zero values has been deleted!")
+        
+    def remove_any_missing_row(self):
+        """remove rows of any missing values"""
+        print('before missing values removal')
+        print(self.df.shape)
+        self.df = self.df.dropna(axis=0,how='any')
+        print('after missing values removal')
+        print(self.df.shape)
+        
+        #flag missing_dropped 
+        self.missing_dropped = True
+
+    def transform_x(self,target_col):
+        """
+        vectorize data X
+        target_col = label / predicting column
+        """
+        print('[VespiqueenTools - Info] transforming x')
+        vectorizer = CountVectorizer()
+        df = self.df.drop(columns=[target_col])
+        self.df = pd.DataFrame(vectorizer.fit_transform(df[df.columns[0]]).toarray())
+        self.df['label'] = self.original_df['label'].values # karena direplace, ambil kolom label dari original df
+        
+    def transform_y(self, target_col, transform_type='binary'):
+        """
+        encode ytrain and ytest
+        transform type: binary, one_hot_encoding
+        """
+        print('[VespiqueenTools - Info] transforming y')
+        if transform_type == 'binary':
+            encoder = LabelEncoder()
+            self.df['label'] = pd.DataFrame(encoder.fit_transform(self.df[target_col]))
+                
+        elif transform_type == 'one_hot_encoding':
+            encoder =  OneHotEncoder()
+            new_label = pd.DataFrame(encoder.fit_transform(pd.DataFrame(self.df[target_col])).toarray())
+            self.df = self.df.drop(columns=[target_col])
+            self.df = pd.concat([self.df.reset_index(),new_label.reset_index()], axis=1)
+            self.df = self.df.drop(columns=['index'])
+        else:
+            print('[Vespiqueen - Error] wrong transform type')
+
+class Vespiqueen(VespiqueenTools):
     """class for holding data, its transformation/features, and clustering model"""
     # create method to initialize load, and easier process if add attribute in save
     def __init__(self, dataset_name, dataframe= None, selected_columns=None, folder_name=None):
@@ -381,26 +445,10 @@ class Vespiqueen:
         self.missing_dropped = False
         self.normalized = False
         self.standardized = False
-        
-    def remove_column_with_full_na(self):
-        """remove column that has no value"""
-        col_missing_sum = self.df.isna().sum()
-        self.df = self.df.drop(columns = col_missing_sum[col_missing_sum == self.df.shape[0]].index)
-        print("all columns with zero values has been deleted!")
-        
-    def remove_any_missing_row(self):
-        """remove rows of any missing values"""
-        print('before missing values removal')
-        print(self.df.shape)
-        self.df = self.df.dropna(axis=0,how='any')
-        print('after missing values removal')
-        print(self.df.shape)
-        
-        #flag missing_dropped 
-        self.missing_dropped = True
     
     def train_test_split(self, target_col:list):
         """ train test split"""
+        print('[Vespiqueen - Info] train test splitting')
         self.target_col = target_col
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.df.drop(columns=target_col), self.df[target_col], test_size=0.33, random_state=173)
         print('shape of:')
@@ -416,31 +464,6 @@ class Vespiqueen:
             print(pd.DataFrame([self.y_train.value_counts(), self.y_test.value_counts()], index=['train','test']))
         elif self.y_train.shape[1] > 1:
             print(pd.DataFrame([self.y_train.sum(), self.y_test.sum()], index=['train','test']))
-        
-    def transform_x(self,target_col):
-        """vectorize data X"""
-        vectorizer = CountVectorizer()
-        df = self.df.drop(columns=[target_col])
-        self.df = pd.DataFrame(vectorizer.fit_transform(df[df.columns[0]]).toarray())
-        self.df['label'] = self.original_df['label'].values # karena direplace, ambil kolom label dari original df
-        
-    def transform_y(self, target_col, transform_type='binary'):
-        """
-        encode ytrain and ytest
-        transform type: binary, one_hot_encoding
-        """
-        if transform_type == 'binary':
-            encoder = LabelEncoder()
-            self.df['label'] = pd.DataFrame(encoder.fit_transform(self.df[target_col]))
-                
-        elif transform_type == 'one_hot_encoding':
-            encoder =  OneHotEncoder()
-            new_label = pd.DataFrame(encoder.fit_transform(pd.DataFrame(self.df[target_col])).toarray())
-            self.df = self.df.drop(columns=[target_col])
-            self.df = pd.concat([self.df.reset_index(),new_label.reset_index()], axis=1)
-            self.df = self.df.drop(columns=['index'])
-        else:
-            print('[Vespiqueen - Error] wrong transform type')
             
     def train_models(self, model_wanted):
         """model_wanted: 
