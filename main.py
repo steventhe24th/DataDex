@@ -17,8 +17,9 @@ try:
     from sklearn.metrics import confusion_matrix
     from sklearn.metrics import accuracy_score,precision_score, recall_score, f1_score
     from sklearn.metrics import mean_squared_error
-    from IPython.display import display, Markdown, HTML
+    from IPython.display import display, Markdown, HTML, clear_output
     from sklearn.feature_extraction.text import CountVectorizer
+  
 except Exception as e:
     print(f'[DataDex - LibError] core library not found {e}.\n please run: pip3 install scikit-learn pandas')
 
@@ -460,9 +461,9 @@ class Vespiqueen(VespiqueenTools):
         print('label of:')
         print('================')
         print('y_train | y_test')
-        if self.y_train.shape[1] == 1:
+        if len(self.y_train.shape) == 1:
             print(pd.DataFrame([self.y_train.value_counts(), self.y_test.value_counts()], index=['train','test']))
-        elif self.y_train.shape[1] > 1:
+        elif len(self.y_train.shape) == 2 and len(self.y_train.shape[1]) > 1:
             print(pd.DataFrame([self.y_train.sum(), self.y_test.sum()], index=['train','test']))
             
     def train_models(self, model_wanted):
