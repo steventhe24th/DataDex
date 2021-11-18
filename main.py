@@ -13,6 +13,7 @@ try:
 
     from sklearn.preprocessing import LabelEncoder
     from sklearn.preprocessing import OneHotEncoder
+    from sklearn.model_selection import cross_val_score
     from sklearn.model_selection import train_test_split
     from sklearn.metrics import confusion_matrix
     from sklearn.metrics import accuracy_score,precision_score, recall_score, f1_score
@@ -269,9 +270,17 @@ class Combee:
             except:
                 print(f"[Combee - Info] {metric_key} failed to be computed. skipped")
                 self.metrics[metric_key] = 'metric failure.' 
-
                 
         self.metrics= pd.DataFrame(self.metrics, index=[1])
+        
+        # add cross val
+        X_combined = pd.concat([self.X_train,self.X_test])
+        y_combined = pd.concat([self.y_train,self.y_test])
+        cv_score = cross_val_score(self.model, X_combined, y_combined, cv=10)
+        
+        self.metrics['min_cvscore'] = cv_score.min()
+        self.metrics['max_cvscore'] = cv_score.max()
+        self.metrics['mean_cvscore'] = cv_score.mean()
         
 class CombeeKeras(Combee):
     def execute(self):
@@ -306,7 +315,7 @@ class Beehive:
             self.metric_list.append(i.models[0].metrics.values[0])
             self.feature_list.append(i.models[0].feature_importance)
             
-        display(pd.DataFrame(self.metric_list, columns=['Accuracy','Precision','Recall','F1 Score','Mean Squared Error'] ,index=self.name_list))
+        display(pd.DataFrame(self.metric_list, columns=['Accuracy','Precision','Recall','F1 Score','Mean Squared Error','cvMin', 'cvMax', 'cvMean'] ,index=self.name_list))
 
         self.display_side_by_side(self.df_list, self.name_list)
         self.display_side_by_side(self.feature_list, self.name_list)
@@ -538,101 +547,8 @@ class Vespiqueen(VespiqueenTools):
                 self.models.append(loaded_model) 
                 
         print('Vespiqueen Object Successfully Loaded!')
-
-
-class Eevee:
-    def __init__(self):
-        pass
-
-    def split_brackets(self, string):
-        splitted_item = []
-        
-        open_count = 0
-        item = ""
-        for char in string:
-            if char == "{":
-                open_count += 1
-                item += char
-
-            elif char == "}":
-                open_count -=1
-                item+=char
-                if open_count == 0:
-                    splitted_item.append(item)
-                    item = ""
-            else:
-                item += char
-        return splitted_item
-
-
-    def clean_text(self, dirty_text):
-        """given text, return stripped whitspace and curly brackets"""
-        string = dirty_text.strip()
-        string = string.replace('{','')
-        string = string.replace('}','')
-        string = string.replace("'",'')
-        return string
-
-    def build(self, string, is_value):
-        splitted_brackets = self.split_brackets(string)
-
-        if len(splitted_brackets) > 1:
-            child_list = []
-            for bracket in splitted_brackets:
-                item_splitted = bracket.split(":")
-                key = self.build(item_splitted[0], False)
-                value = self.build(":".join(item_splitted[1:]), True)
-                child_list.append({key:value})
-            return child_list
-
-        if string.count(":") == 0:
-            string = self.clean_text(string)
-            return string
-        if string.count(":") == 1:
-            string_split = string.split(":")
-            key=string_split[0]
-            value = self.clean_text(string_split[1])
-            string_dict = {key: value}
-            return string_dict
-        if string.count(":") > 1 and is_value == True:
-            string_split = string.split(":")
-            string_split = string_split
-            
-            is_head = True
-            key = ""
-            cumulative_string = ""
-            sub_list = []
-            for sub in string_split:
-                if is_head == True:
-                    try:
-                        int(sub)
-                    except:
-                        continue
-                    key = sub
-                    is_head = False
-                    continue
-                if '\\n' in sub:
-                    cumulative_string += sub
-                    sub_list.append({key: cumulative_string})
-                    is_head = True
-                    key = ""
-                    cumulative_string = ""
-                else:
-                    cumulative_string += sub
-            return sub_list
-
-
-
-        item_splitted = string.split(":")
-        key = self.build(item_splitted[0], False)
-        value = self.build(":".join(item_splitted[1:]), True)
-        return {key:value}
-
-
         
 # global function
 def display_full_df(df):
     """show all rows from one df"""
     display(df.style.set_table_attributes("style='display:inline'"))
-        
-        
