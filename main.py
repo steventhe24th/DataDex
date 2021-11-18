@@ -256,7 +256,7 @@ class Combee:
         self.feature_importance = pd.DataFrame(self.model.feature_importances_)
         self.feature_importance.columns = ['importance']
         self.feature_importance['column_name'] = self.X_train.columns
-        self.feature_importance = self.feature_importance.sort_values(by='importance', ascending=False)
+        self.feature_importance = self.feature_importance.sort_values(by='importance', ascending=False).reset_index() # add reset index to get ordered list when shown
 
     def compute_metrics(self):
         """calculate metrics"""
@@ -552,3 +552,5 @@ class Vespiqueen(VespiqueenTools):
 def display_full_df(df):
     """show all rows from one df"""
     display(df.style.set_table_attributes("style='display:inline'"))
+        
+        
