@@ -307,6 +307,13 @@ class Beehive:
         self.metric_list = []
         self.feature_list = []
         
+    def reset(self):
+        self.vespiqueen_list = []
+        self.df_list = []
+        self.name_list = []
+        self.metric_list = []
+        self.feature_list = []
+        
     def show(self):  
         """execute iteration to compute metrics, confusion matrix, and feature importances"""
         for i in self.vespiqueen_list:
@@ -366,7 +373,7 @@ class VespiqueenTools:
 
     def clean_text(self, col):
         """given df, clean column specified, return series"""
-        self.df[col].apply(lambda x: self.clean(x))
+        self.df[col] = self.df[col].apply(lambda x: self.clean(x))
 
 
     def remove_column_with_full_na(self):
