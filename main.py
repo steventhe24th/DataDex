@@ -66,7 +66,7 @@ try:
         text_input = tf.keras.layers.Input(shape=(), dtype=tf.string, name='text')
         preprocessing_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3", name='preprocessing')
         encoder_inputs = preprocessing_layer(text_input)
-        encoder = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/4", trainable=True, name='BERT_encoder')
+        encoder = hub.KerasLayer("https://tfhub.dev/google/experts/bert/wiki_books/2", trainable=True, name='BERT_encoder')
         outputs = encoder(encoder_inputs)
         net = outputs['pooled_output']
         net = tf.keras.layers.Dense(5, activation='sigmoid', name='classifier')(net)
@@ -85,9 +85,9 @@ try:
 
     # add the model to model dict
     print("[Datadex - Info] setting up adventure. please wait approx. 2 minutes")
-    MODEL_DICT['nnlm_128_hub'] = build_nnlm_classifier()
+#     MODEL_DICT['nnlm_128_hub'] = build_nnlm_classifier()
     MODEL_DICT['bert'] = build_classifier_model()
-    MODEL_DICT['neural_net'] = build_basic_neural_net_model() 
+#     MODEL_DICT['neural_net'] = build_basic_neural_net_model() 
     ###
 
 except Exception as e:
@@ -362,7 +362,7 @@ class VespiqueenTools:
             if lexeme.is_stop == False:
                 filtered_sentence.append(word) 
         
-        string = nlp("".join(filtered_sentence))
+        string = nlp(" ".join(filtered_sentence))
 
         clean_sentence = []
         for sent in string.sents:
@@ -374,6 +374,16 @@ class VespiqueenTools:
     def clean_text(self, col):
         """given df, clean column specified, return series"""
         self.df[col] = self.df[col].apply(lambda x: self.clean(x))
+        full_list = []
+        for i in range(len(self.df)):
+            row = self.df.iloc[i]
+            label = row['label']
+            for sentence in row['text']:
+                item = [sentence,label]
+                full_list.append(item)
+        self.df = pd.DataFrame(full_list, columns=self.df.columns)
+        
+        
 
 
     def remove_column_with_full_na(self):
@@ -479,7 +489,7 @@ class Vespiqueen(VespiqueenTools):
         print('y_train | y_test')
         if len(self.y_train.shape) == 1:
             print(pd.DataFrame([self.y_train.value_counts(), self.y_test.value_counts()], index=['train','test']))
-        elif len(self.y_train.shape) == 2 and len(self.y_train.shape[1]) > 1:
+        elif len(self.y_train.shape) == 2 and self.y_train.shape[1] > 1:
             print(pd.DataFrame([self.y_train.sum(), self.y_test.sum()], index=['train','test']))
             
     def train_models(self, model_wanted):
