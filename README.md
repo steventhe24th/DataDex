@@ -28,6 +28,16 @@ One Combee should represent one model and its features includes: (metrics, confu
 (keras-based)  
 needed because Keras has different features and functions compared to sklearn  
 
+#### Diglett 
+diglett functions to load file-based data convert to necessary pandas dataframe vice versa.
+necessary pandas dataframe:  
+ original df  
+ numerical cols  
+ categorical cols  
+ 
+#### Eevee
+eevee is a string parser that converts string to json format
+
 #### Vespiqueen
 One Vespiqueen should represent one episode.   
 Vespiqueen memorizes the tranformation of data.    
