@@ -66,7 +66,8 @@ try:
         text_input = tf.keras.layers.Input(shape=(), dtype=tf.string, name='text')
         preprocessing_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3", name='preprocessing')
         encoder_inputs = preprocessing_layer(text_input)
-        encoder = hub.KerasLayer("https://tfhub.dev/google/experts/bert/wiki_books/2", trainable=True, name='BERT_encoder')
+        encoder = hub.KerasLayer("https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-2_H-128_A-2/2", trainable=True, name='BERT_encoder')
+#         encoder = hub.KerasLayer("https://tfhub.dev/google/experts/bert/wiki_books/2", trainable=True, name='BERT_encoder')
         outputs = encoder(encoder_inputs)
         net = outputs['pooled_output']
         net = tf.keras.layers.Dense(5, activation='sigmoid', name='classifier')(net)
@@ -217,6 +218,8 @@ class Combee:
             print(f"[Combee - Info] {self.model_name} has no feature importance")
         print('[Combee - Info] compute metrics')
         self.compute_metrics()
+        print('[Combee - Info] cross validating')
+        self.compute_cross_val()
     
     def train(self):
         """train the model"""
@@ -226,7 +229,12 @@ class Combee:
 
     def set_confusion_matrix(self):
         """compute & set confusion matrix"""
-        self.confusion_matrix = confusion_matrix(self.y_test, self.prediction, labels = self.labels)
+        try: # make sure type is the same
+            self.confusion_matrix = confusion_matrix(self.y_test, self.prediction, labels = self.labels)
+        except:
+            self.y_test = self.y_test.apply(lambda x: int(x))
+            self.prediction = self.prediction.apply(lambda x: int(x))
+            self.confusion_matrix = confusion_matrix(self.y_test, self.prediction)
         self.confusion_matrix = pd.DataFrame(self.confusion_matrix, columns=self.labels, index=self.labels)
         
     def prepare_confusion_matrix(self):
@@ -258,6 +266,16 @@ class Combee:
         self.feature_importance['column_name'] = self.X_train.columns
         self.feature_importance = self.feature_importance.sort_values(by='importance', ascending=False).reset_index() # add reset index to get ordered list when shown
 
+    def compute_cross_val(self):
+        """cross val the model and add result """
+        X_combined = pd.concat([self.X_train,self.X_test])
+        y_combined = pd.concat([self.y_train,self.y_test])
+        cv_score = cross_val_score(self.model, X_combined, y_combined, cv=10)
+        
+        self.metrics['min_cvscore'] = cv_score.min()
+        self.metrics['max_cvscore'] = cv_score.max()
+        self.metrics['mean_cvscore'] = cv_score.mean()
+    
     def compute_metrics(self):
         """calculate metrics"""
         for i in range(len(self.metrics_used)):
@@ -273,14 +291,8 @@ class Combee:
                 
         self.metrics= pd.DataFrame(self.metrics, index=[1])
         
-        # add cross val
-        X_combined = pd.concat([self.X_train,self.X_test])
-        y_combined = pd.concat([self.y_train,self.y_test])
-        cv_score = cross_val_score(self.model, X_combined, y_combined, cv=10)
         
-        self.metrics['min_cvscore'] = cv_score.min()
-        self.metrics['max_cvscore'] = cv_score.max()
-        self.metrics['mean_cvscore'] = cv_score.mean()
+
         
 class CombeeKeras(Combee):
     def execute(self):
@@ -292,11 +304,27 @@ class CombeeKeras(Combee):
         self.compute_metrics()
         
     def train(self):
-        self.model.fit(self.X_train, self.y_train, epochs=10, batch_size=32)
+        self.model.fit(self.X_train, self.y_train, epochs=1, batch_size=32)
         self.prediction = self.model.predict(self.X_test)
         
     def compute_general_info(self):
         self.prepare_confusion_matrix() # sebab Keras tidak punya predict_proba atau method classes_
+        
+    def compute_metrics(self):
+        """calculate metrics"""
+        for i in range(len(self.metrics_used)):
+            try:
+                metric_key = list(self.metrics.keys())[i]
+                if metric_key == 'Precision' or metric_key == 'Recall' or metric_key == 'F1 Score':
+                    self.metrics[metric_key] = self.metrics_used[i](self.y_test, self.prediction, average='weighted')
+                else:
+                    self.metrics[metric_key] = self.metrics_used[i](self.y_test, self.prediction)
+            except:
+                print(f"[Combee - Info] {metric_key} failed to be computed. skipped")
+                self.metrics[metric_key] = 'metric failure.' 
+                
+        self.metrics= pd.DataFrame(self.metrics, index=[1])
+
 
 class Beehive:
     """class to contain all vespiqueens, and show each metrics"""
@@ -569,5 +597,3 @@ class Vespiqueen(VespiqueenTools):
 def display_full_df(df):
     """show all rows from one df"""
     display(df.style.set_table_attributes("style='display:inline'"))
-        
-        
