@@ -594,6 +594,10 @@ class Vespiqueen(VespiqueenTools):
         print('Vespiqueen Object Successfully Loaded!')
         
 # global function
-def display_full_df(df):
-    """show all rows from one df"""
-    display(df.style.set_table_attributes("style='display:inline'"))
+class Utility:
+    def __init__(self):
+        pass
+
+    def display_full_df(self, df):
+        """show all rows from one df"""
+        display(df.style.set_table_attributes("style='display:inline'"))
