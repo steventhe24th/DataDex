@@ -601,3 +601,27 @@ class Utility:
     def display_full_df(self, df):
         """show all rows from one df"""
         display(df.style.set_table_attributes("style='display:inline'"))
+
+    def swap(self, target_list, index_one, index_two):
+        """swap element of two lists"""
+        temp = target_list[index_one]
+        target_list[index_one] = target_list[index_two]
+        target_list[index_two] = temp
+
+    def insert(self, target_list, target_index, index_wanted):
+        """take one element and insert it to another index while removing the element"""
+        temp_list = []
+        last_i = 0
+        for i in range(len(target_list)):
+            if i < target_index:
+                temp_list.append(target_list[i])
+                continue
+            temp_list.append(target_list[index_wanted])
+            last_i = i
+            break
+        
+        for i in range(last_i, len(target_list)):
+            if i == index_wanted:
+                continue
+            temp_list.append(target_list[i])
+        return temp_list
