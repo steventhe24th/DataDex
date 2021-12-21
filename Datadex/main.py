@@ -592,7 +592,97 @@ class Vespiqueen(VespiqueenTools):
                 self.models.append(loaded_model) 
                 
         print('Vespiqueen Object Successfully Loaded!')
+
+class Eevee:
+    def __init__(self):
+        pass
+
+
+    def split_brackets(self, string):
+        splitted_item = []
         
+        open_count = 0
+        item = ""
+        for char in string:
+            if char == "{":
+                open_count += 1
+                item += char
+
+            elif char == "}":
+                open_count -=1
+                item+=char
+                if open_count == 0:
+                    splitted_item.append(item)
+                    item = ""
+            else:
+                item += char
+        return splitted_item
+
+
+    def clean_text(self, dirty_text):
+        """given text, return stripped whitspace and curly brackets"""
+        string = dirty_text.strip()
+        string = string.replace('{','')
+        string = string.replace('}','')
+        string = string.replace("'",'')
+        return string
+
+    def build(self, string, is_value):
+        splitted_brackets = self.split_brackets(string)
+
+        if len(splitted_brackets) > 1:
+            child_list = []
+            for bracket in splitted_brackets:
+                item_splitted = bracket.split(":")
+                key = self.build(item_splitted[0], False)
+                value = self.build(":".join(item_splitted[1:]), True)
+                child_list.append({key:value})
+            return child_list
+
+        if string.count(":") == 0:
+            string = self.clean_text(string)
+            return string
+        if string.count(":") == 1:
+            string_split = string.split(":")
+            key=string_split[0]
+            value = self.clean_text(string_split[1])
+            string_dict = {key: value}
+            return string_dict
+        if string.count(":") > 1 and is_value == True:
+            string_split = string.split(":")
+            string_split = string_split
+            
+            is_head = True
+            key = ""
+            cumulative_string = ""
+            sub_list = []
+            for sub in string_split:
+                if is_head == True:
+                    try:
+                        int(sub)
+                    except:
+                        continue
+                    key = sub
+                    is_head = False
+                    continue
+                if '\\n' in sub:
+                    cumulative_string += sub + ' ' 
+                    sub_list.append({key: cumulative_string.strip()})
+                    is_head = True
+                    key = ""
+                    cumulative_string = ""
+                else:
+                    cumulative_string += sub + ' '
+            return sub_list
+
+
+
+        item_splitted = string.split(":")
+        key = self.build(item_splitted[0], False)
+        value = self.build(":".join(item_splitted[1:]), True)
+        return {key:value}
+
+
 # global function
 class Utility:
     def __init__(self):
