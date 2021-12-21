@@ -652,6 +652,10 @@ class Eevee:
             string_split = string.split(":")
             string_split = string_split
             
+            #untuk handle string value yang memiliki banyak ':'
+            if isinstance(string_split[0], int) == False:
+                return " ".join(string_split)
+
             is_head = True
             key = ""
             cumulative_string = ""
