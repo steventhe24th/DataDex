@@ -377,8 +377,8 @@ beehive = Beehive()
 
 
 class VespiqueenTools:
-    def __init__(self):
-        pass
+    def __init__(self,df):
+        self.df = df
 
     def clean(self, text):
         nlp = spacy.load("en_core_web_sm")
