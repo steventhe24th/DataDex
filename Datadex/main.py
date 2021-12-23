@@ -381,6 +381,13 @@ class VespiqueenTools:
         self.df = df
 
     def clean(self, text):
+        not_empty = []
+
+        for item in x:
+            if item != '':
+                not_empty.append(item)
+        text = " ".join(not_empty)
+
         nlp = spacy.load("en_core_web_sm")
         string = nlp(text)
         filtered_sentence = []
@@ -397,7 +404,7 @@ class VespiqueenTools:
             if sent.lemma_ != '':
                 clean_sentence.append(sent.lemma_)
 
-        return clean_sentence
+        return " ".join(clean_sentence)
 
     def clean_text(self, col):
         """given df, clean column specified, return series"""
