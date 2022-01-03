@@ -87,9 +87,9 @@ try:
 
     # add the model to model dict
     print("[Datadex - Info] setting up adventure. please wait approx. 2 minutes")
-#     MODEL_DICT['nnlm_128_hub'] = build_nnlm_classifier()
+    MODEL_DICT['nnlm_128_hub'] = build_nnlm_classifier()
     MODEL_DICT['bert'] = build_classifier_model()
-#     MODEL_DICT['neural_net'] = build_basic_neural_net_model() 
+    MODEL_DICT['neural_net'] = build_basic_neural_net_model() 
     ###
 
 except Exception as e:
@@ -602,9 +602,6 @@ class Vespiqueen(VespiqueenTools):
         print('Vespiqueen Object Successfully Loaded!')
 
 class Eevee:
-    def __init__(self):
-        pass
-
 
     def split_brackets(self, string):
         splitted_item = []
@@ -728,7 +725,7 @@ class Utility:
             temp_list.append(target_list[i])
         return temp_list
   
-    def get_all_file_paths(directory):
+    def get_all_file_paths(self, directory):
         # initializing empty file paths list
         file_paths = []
     
@@ -742,12 +739,12 @@ class Utility:
         # returning all file paths
         return file_paths        
     
-    def zip_path(path, output_name):
+    def zip_path(self, path, output_name):
         # path to folder which needs to be zipped
         directory = f'./{path}'
     
         # calling function to get all file paths in the directory
-        file_paths = get_all_file_paths(directory)
+        file_paths = self.get_all_file_paths(directory)
     
         # printing the list of all files to be zipped
         print('Following files will be zipped:')
