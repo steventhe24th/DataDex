@@ -50,3 +50,8 @@ Beehive is used to print all the metrics across Vespiqueen (or episodes)
 Can also be used to pick new features from the last or best vespiqueen for the next episode.   
 
 ## How to Use
+
+
+#### uploading to pypi
+python setup.py sdist
+twine upload dist/*
