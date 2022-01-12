@@ -98,9 +98,31 @@ finally:
     print("[Datadex - Info] adventure is ready.")
 
 class Diglett:
-    def __init__(self, dataframe= None, target_col= None, file_folder = None):
-        self.df = dataframe
+    def __init__(self, file_path= None, target_col= None, file_folder = None):
+        """
+        file path: path menuju ke file csv / excel
+        target_col: kolom label atau target
+        file folder: path menuju file berbentuk folder
+        """
+        
+        #set base dataframe
+        if '.csv' in file_path:
+            try:
+                dataframe = pd.read_csv(file_path)
+            except Exception as e:
+                raise f'file not found or corrupted: {e}'
+            else:
+                self.df = dataframe
+        elif '.xlsx' in file_path:
+            try:
+                dataframe = pd.read_excel(file_path, engine='openpyxl')
+            except Exception as e:
+                raise f'file not found or corrupted: {e}'
+            else:
+                self.df = dataframe 
+        #set target col
         self.target_col = target_col
+        
         if dataframe is not None:
             self.columns = self.df.columns
             self.categorical_col = self.df.select_dtypes(include=['object']).columns
@@ -145,7 +167,7 @@ class Diglett:
                     self.write(train_path,tag,i,X_values.iloc[i])
                 else:
                     self.write(test_path,tag,i,X_values.iloc[i])
-
+                    
     def load_file(self, path, label_list):
         """
         load folder transform to dataframe
