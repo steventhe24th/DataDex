@@ -19,17 +19,17 @@ episode_2 = (sepal_length, sepal_width, petal_length, petal_width) | (target_cla
 episode_3 = (sepal_length_normalized, sepal_width_normalized, petal_length_normalized, petal_width_normalized) | (target_class)  
 
 ### get to know the classes
-#### Combee
-One Combee should represent one model and its features includes: (metrics, confusion matrix, feature importances)  
+#### Model
+One Model should represent one model and its features includes: (metrics, confusion matrix, feature importances)  
 (sklearn-based)  
 
-##### CombeKeras
-One Combee should represent one model and its features includes: (metrics, confusion matrix)  
+##### ModelKeras
+One Model  should represent one model and its features includes: (metrics, confusion matrix)  
 (keras-based)  
 needed because Keras has different features and functions compared to sklearn  
 
-#### Diglett 
-diglett functions to load file-based data convert to necessary pandas dataframe vice versa.
+#### DataLoaded 
+dataloader functions to load file-based data convert to necessary pandas dataframe vice versa.
 necessary pandas dataframe:  
  original df  
  numerical cols  
@@ -38,16 +38,16 @@ necessary pandas dataframe:
 #### Eevee
 eevee is a string parser that converts string to json format
 
-#### Vespiqueen
-One Vespiqueen should represent one episode.   
-Vespiqueen memorizes the tranformation of data.    
-Vespiqueen governs all the Combees.  
-Can be used to pick which model is best in a Vespiqueen.
+#### Experiment
+One Experiment should represent one episode.   
+Experiment memorizes the tranformation of data.    
+Experiment governs all the Models.  
+Can be used to pick which model is best in an Experiment.
 
-#### Beehive
-Beehive governs the whole Vespiqueen.  
-Beehive is used to print all the metrics across Vespiqueen (or episodes)  
-Can also be used to pick new features from the last or best vespiqueen for the next episode.   
+#### Journal
+Journal governs all the Experiments.  
+BeeJournalhive is used to print all the metrics across Experiments (or episodes)  
+Can also be used to pick new features from the last or best Experiments for the next episode.   
 
 ## How to Use
 
