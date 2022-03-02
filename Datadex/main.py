@@ -1,4 +1,3 @@
-
 import pandas as pd
 import numpy as np
 import pickle
@@ -26,7 +25,6 @@ from zipfile import ZipFile
 import spacy
 from spacy.lang.en.stop_words import STOP_WORDS
 import tensorflow_text as text
-from sklearn.feature_extraction.text import CountVectorizer
 #NLP
 
 #tensorflow
@@ -42,56 +40,58 @@ MODEL_DICT = {'random_forest':RandomForestClassifier(random_state=173),
               'k_nearest_neighbor':KNeighborsClassifier(),
              }
 
-### initiate model
-## nnlm tensorhub 128 normalized
-def build_nnlm_classifier():
-    model = keras.Sequential()
-    model.add(hub.KerasLayer('https://tfhub.dev/google/tf2-preview/nnlm-en-dim128-with-normalization/1', output_shape=[128], input_shape=[], dtype=tf.string))
-    model.add(keras.layers.Dense(16, activation='relu'))
-    model.add(keras.layers.Dense(5, activation='sigmoid'))
+class Initiator:
+  def __init__(self):
+    # add the model to model dict
+    print("[Datadex - Info] setting up adventure. please wait approx. 2 minutes")
+    try:
+        MODEL_DICT['nnlm_128_hub'] = self.build_nnlm_classifier()
+    except Exception as e:
+        print(f'model [nnlm] failed to load {e}. check network connection')
+    try:
+        MODEL_DICT['bert'] = self.build_classifier_model()
+    except Exception as e:
+        print(f'model [bert] failed to load {e}. check network connection')
+    try:
+        MODEL_DICT['neural_net'] = self.build_basic_neural_net_model() 
+    except Exception as e:
+        print(f'model [neural_net] failed to load {e}. check network connection')
+    ###
 
-    model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
-    return model
+  ### initiate model
+  ## nnlm tensorhub 128 normalized
+  def build_nnlm_classifier(self):
+      model = keras.Sequential()
+      model.add(hub.KerasLayer('https://tfhub.dev/google/tf2-preview/nnlm-en-dim128-with-normalization/1', output_shape=[128], input_shape=[], dtype=tf.string))
+      model.add(keras.layers.Dense(16, activation='relu'))
+      model.add(keras.layers.Dense(5, activation='sigmoid'))
 
-## bert model tensorhub
-def build_classifier_model():
-    text_input = tf.keras.layers.Input(shape=(), dtype=tf.string, name='text')
-    preprocessing_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3", name='preprocessing')
-    encoder_inputs = preprocessing_layer(text_input)
-    encoder = hub.KerasLayer("https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-2_H-128_A-2/2", trainable=True, name='BERT_encoder')
-    outputs = encoder(encoder_inputs)
-    net = outputs['pooled_output']
-    net = tf.keras.layers.Dense(5, activation='sigmoid', name='classifier')(net)
-    model = tf.keras.Model(text_input, net)
-    model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
-    return model
+      model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
+      return model
 
-#basic neural net
-def build_basic_neural_net_model():
-    model = keras.Sequential()
-    model.add(keras.layers.Dense(16, activation='relu'))
-    model.add(keras.layers.Dense(4, activation='sigmoid'))
-    
-    model.compile(optimizer= 'adam', loss= 'binary_crossentropy')
-    return model
+  ## bert model tensorhub
+  def build_classifier_model(self):
+      text_input = tf.keras.layers.Input(shape=(), dtype=tf.string, name='text')
+      preprocessing_layer = hub.KerasLayer("https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3", name='preprocessing')
+      encoder_inputs = preprocessing_layer(text_input)
+      encoder = hub.KerasLayer("https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-2_H-128_A-2/2", trainable=True, name='BERT_encoder')
+      outputs = encoder(encoder_inputs)
+      net = outputs['pooled_output']
+      net = tf.keras.layers.Dense(5, activation='sigmoid', name='classifier')(net)
+      model = tf.keras.Model(text_input, net)
+      model.compile(optimizer= 'rmsprop', loss= 'binary_crossentropy', metrics=[tf.keras.metrics.Precision(),tf.keras.metrics.Recall()])
+      return model
 
-# add the model to model dict
-print("[Datadex - Info] setting up adventure. please wait approx. 2 minutes")
-try:
-    MODEL_DICT['nnlm_128_hub'] = build_nnlm_classifier()
-except Exception as e:
-    print(f'model [nnlm] failed to load {e}. check network connection')
-try:
-    MODEL_DICT['bert'] = build_classifier_model()
-except Exception as e:
-    print(f'model [bert] failed to load {e}. check network connection')
-try:
-    MODEL_DICT['neural_net'] = build_basic_neural_net_model() 
-except Exception as e:
-    print(f'model [neural_net] failed to load {e}. check network connection')
-###
+  #basic neural net
+  def build_basic_neural_net_model(self):
+      model = keras.Sequential()
+      model.add(keras.layers.Dense(16, activation='relu'))
+      model.add(keras.layers.Dense(4, activation='sigmoid'))
 
-class Diglett:
+      model.compile(optimizer= 'adam', loss= 'binary_crossentropy')
+      return model
+
+class DataLoader:
     def __init__(self, file_path= None, target_col= None, file_folder = None):
         """
         file path: path menuju ke file csv / excel
@@ -125,7 +125,7 @@ class Diglett:
             self.target_values = self.df[target_col].drop_duplicates().values
             self.datetime_col = None
         elif dataframe is None and file_folder is None:
-            print('[Diglett - FileError] dataset is found empty. if data is folder-based, call load_file()')
+            print('[DataLoaded - FileError] dataset is found empty. if data is folder-based, call load_file()')
         elif file_folder is not None:
             self.load_file(path=file_folder, label_list=os.listdir(file_folder))
 
@@ -145,7 +145,7 @@ class Diglett:
         try:
             os.listdir(base_folder)
         except:
-            print("[Diglett - info] base folder has not yet exist. Creating the folder...  completed")
+            print("[DataLoaded - info] base folder has not yet exist. Creating the folder...  completed")
             os.mkdir(base_folder)
             os.mkdir(train_path)
             os.mkdir(test_path)
@@ -186,14 +186,14 @@ class Diglett:
                     string_list.append(string)
                     f.close()
                 except Exception as e:
-                    print(f"[Diglett - FileError] file {source}-{file} is corrupted or missing. exception: {e} ")
+                    print(f"[DataLoader - FileError] file {source}-{file} is corrupted or missing. exception: {e} ")
             temp_df['text'] = string_list
             temp_df['label'] = label
 
             df= df.append(temp_df)
         self.df = df
-   
-class Combee:
+
+class Model:
     """class that represents one Model"""
     def __init__(self, model_name= None, model_self= None, X_train= None, X_test= None, y_train= None,y_test= None):
         try:
@@ -201,10 +201,10 @@ class Combee:
         except:
             if model_self is not None:
                 self.model = model_self
-                print('[Combee - Info] user-defined model is loaded!')
+                print('[Model - Info] user-defined model is loaded!')
             else:
                 self.model = MODEL_DICT['random_forest']
-                print('[Combee - Info] model request does not exist! defaulting to random_forest.')
+                print('[Model - Info] model request does not exist! defaulting to random_forest.')
                 
         self.model_name = model_name
         self.X_train = X_train
@@ -232,15 +232,15 @@ class Combee:
         try:
             self.compute_feature_importance()
         except:
-            print(f"[Combee - Info] {self.model_name} has no feature importance")
-        print('[Combee - Info] compute metrics')
+            print(f"[Model - Info] {self.model_name} has no feature importance")
+        print('[Model - Info] compute metrics')
         self.compute_metrics()
-        print('[Combee - Info] cross validating')
+        print('[Model - Info] cross validating')
         self.compute_cross_val()
     
     def train(self):
         """train the model"""
-        print(f'[Combee - Info] training {self.model_name}')
+        print(f'[Model - Info] training {self.model_name}')
         self.model.fit(self.X_train, self.y_train)
         self.prediction = self.model.predict(self.X_test)
 
@@ -303,21 +303,19 @@ class Combee:
                 else:
                     self.metrics[metric_key] = self.metrics_used[i](self.y_test, self.prediction)
             except:
-                print(f"[Combee - Info] {metric_key} failed to be computed. skipped")
+                print(f"[Model - Info] {metric_key} failed to be computed. skipped")
                 self.metrics[metric_key] = 'metric failure.' 
                 
         self.metrics= pd.DataFrame(self.metrics, index=[1])
         
         
-
-        
-class CombeeKeras(Combee):
+class ModelKeras(Model):
     def execute(self):
-        print('[CombeeKeras - info] training model')
+        print('[ModelKeras - info] training model')
         self.train()
-        print('[CombeeKeras - info] computing all info')
+        print('[ModelKeras - info] computing all info')
         self.compute_general_info()
-        print('[CombeeKeras - info] compute metrics')
+        print('[ModelKeras - info] compute metrics')
         self.compute_metrics()
         
     def train(self):
@@ -337,23 +335,23 @@ class CombeeKeras(Combee):
                 else:
                     self.metrics[metric_key] = self.metrics_used[i](self.y_test, self.prediction)
             except:
-                print(f"[Combee - Info] {metric_key} failed to be computed. skipped")
+                print(f"[Model - Info] {metric_key} failed to be computed. skipped")
                 self.metrics[metric_key] = 'metric failure.' 
                 
         self.metrics= pd.DataFrame(self.metrics, index=[1])
 
 
-class Beehive:
-    """class to contain all vespiqueens, and show each metrics"""
+class Journal:
+    """class to contain all experiments, and show each metrics"""
     def __init__(self):
-        self.vespiqueen_list = []
+        self.experiment_list = []
         self.df_list = []
         self.name_list = []
         self.metric_list = []
         self.feature_list = []
         
     def reset(self):
-        self.vespiqueen_list = []
+        self.experiment_list = []
         self.df_list = []
         self.name_list = []
         self.metric_list = []
@@ -361,7 +359,7 @@ class Beehive:
         
     def show(self):  
         """execute iteration to compute metrics, confusion matrix, and feature importances"""
-        for i in self.vespiqueen_list:
+        for i in self.experiment_list:
             self.name_list.append(i.folder_name + '| shape: ' + str(self.sum_all(i.models[0].confusion_matrix)))
             self.df_list.append(i.models[0].confusion_matrix)
             self.metric_list.append(i.models[0].metrics.values[0])
@@ -390,10 +388,10 @@ class Beehive:
             output += tablespacing * "\xa0"
         display(HTML(output))    
         
-beehive = Beehive() 
+journal = Journal() 
 
 
-class VespiqueenTools:
+class ExperimentTools:
     def __init__(self,df):
         self.df = df
 
@@ -434,9 +432,6 @@ class VespiqueenTools:
                 item = [sentence,label]
                 full_list.append(item)
         self.df = pd.DataFrame(full_list, columns=self.df.columns)
-        
-        
-
 
     def remove_column_with_full_na(self):
         """remove column that has no value"""
@@ -460,7 +455,7 @@ class VespiqueenTools:
         vectorize data X
         target_col = label / predicting column
         """
-        print('[VespiqueenTools - Info] transforming x')
+        print('[ExperimentTools - Info] transforming x')
         vectorizer = CountVectorizer()
         df = self.df.drop(columns=[target_col])
         self.df = pd.DataFrame(vectorizer.fit_transform(df[df.columns[0]]).toarray())
@@ -471,7 +466,7 @@ class VespiqueenTools:
         encode ytrain and ytest
         transform type: binary, one_hot_encoding
         """
-        print('[VespiqueenTools - Info] transforming y')
+        print('[ExperimentTools - Info] transforming y')
         if transform_type == 'binary':
             encoder = LabelEncoder()
             self.df['label'] = pd.DataFrame(encoder.fit_transform(self.df[target_col]))
@@ -483,9 +478,9 @@ class VespiqueenTools:
             self.df = pd.concat([self.df.reset_index(),new_label.reset_index()], axis=1)
             self.df = self.df.drop(columns=['index'])
         else:
-            print('[Vespiqueen - Error] wrong transform type')
+            print('[Experiment - Error] wrong transform type')
 
-class Vespiqueen(VespiqueenTools):
+class Experiment(ExperimentTools):
     """class for holding data, its transformation/features, and clustering model"""
     # create method to initialize load, and easier process if add attribute in save
     def __init__(self, dataset_name, dataframe= None, selected_columns=None, folder_name=None):
@@ -497,8 +492,8 @@ class Vespiqueen(VespiqueenTools):
         """
         
         self.initiate_constructor(dataframe= dataframe, dataset_name=dataset_name, selected_columns=selected_columns, folder_name=folder_name)
-        beehive.vespiqueen_list.append(self)
-        print("Vespiqueen object created and appended to beehive")
+        journal.experiment_list.append(self)
+        print("Experiment object created and appended to Journal")
     
     def initiate_constructor(self, dataset_name, dataframe= None, selected_columns=None, folder_name=None, models=[],missing_dropped=False,normalized=False,standardized=False, target_col=None):
         try:
@@ -527,7 +522,7 @@ class Vespiqueen(VespiqueenTools):
     
     def train_test_split(self, target_col:list):
         """ train test split"""
-        print('[Vespiqueen - Info] train test splitting')
+        print('[Experiment - Info] train test splitting')
         self.target_col = target_col
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.df.drop(columns=target_col), self.df[target_col], test_size=0.33, random_state=173)
         print('shape of:')
@@ -551,13 +546,13 @@ class Vespiqueen(VespiqueenTools):
         """
         for model,is_keras in model_wanted:
             if is_keras == True:
-                model_instance = CombeeKeras(model_name=model, X_train=self.X_train, X_test=self.X_test, y_train=self.y_train, y_test=self.y_test)
+                model_instance = ModelKeras(model_name=model, X_train=self.X_train, X_test=self.X_test, y_train=self.y_train, y_test=self.y_test)
             else:
-                model_instance = Combee(model_name=model, X_train=self.X_train, X_test=self.X_test, y_train=self.y_train, y_test=self.y_test)
+                model_instance = Model(model_name=model, X_train=self.X_train, X_test=self.X_test, y_train=self.y_train, y_test=self.y_test)
             model_instance.execute() 
             self.models.append(model_instance)
-        print('[Vespiqueen - Info] all training completed successfully')
-        print('[Vespiqueen - Info] check result in models[i].[all_info,feature_importance,confusion_matrix,metrics]')
+        print('[Experiment - Info] all training completed successfully')
+        print('[Experiment - Info] check result in models[i].[all_info,feature_importance,confusion_matrix,metrics]')
 
     def save(self):  
         """save selected columns, metrics, and model"""
@@ -568,7 +563,7 @@ class Vespiqueen(VespiqueenTools):
         except:
             os.mkdir(folder_name)
             
-        vespiqueen_dict = {
+        experiment_dict = {
             'dataset_name': self.dataset_name,
             'selected_columns':self.selected_columns,
             'target_col': self.target_col,
@@ -578,7 +573,7 @@ class Vespiqueen(VespiqueenTools):
             'folder_name': self.folder_name
         }
         
-        json_text = json.dumps(vespiqueen_dict, indent=4, sort_keys=True, default=str)
+        json_text = json.dumps(experiment_dict, indent=4, sort_keys=True, default=str)
         with open(folder_name+'/profile.txt', 'w') as f:
             f.write(json_text)
             
@@ -592,16 +587,16 @@ class Vespiqueen(VespiqueenTools):
             except: # if failed using sklearn
                 self.models[i].model = None
                 pickle.dump(self.models[i], open(filename+'.sav', 'wb'))
-        print('vespiqueen object has been saved!')
+        print('Experiment object has been saved!')
             
     def load(self, folder_name):
-        """load a vespiqueen object
+        """load a Experiment object
         if model is keras, model object is not saved, only the result
         """
         try:
             os.listdir(folder_name)
         except:
-            print(f'[Vespiqueen - FileError] folder {folder_name} does not exist! ending process.')
+            print(f'[Experiment - FileError] folder {folder_name} does not exist! ending process.')
         
         with open(folder_name + '/profile.txt') as json_file:
             data = json.load(json_file)
@@ -615,7 +610,7 @@ class Vespiqueen(VespiqueenTools):
                 loaded_model = pickle.load(open(folder_name+'/'+file, 'rb'))
                 self.models.append(loaded_model) 
                 
-        print('Vespiqueen Object Successfully Loaded!')
+        print('Experiment Object Successfully Loaded!')
 
 class Eevee:
 
