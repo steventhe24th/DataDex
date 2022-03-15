@@ -707,6 +707,39 @@ class Eevee:
 class Utility:
     def __init__(self):
         pass
+      
+    def is_different(val_1, val_2):
+        if val_1 != val_2: return True
+        return False
+
+    def get_all_mismatch_dtype(df_1_cols,df_2_cols):
+        result = []
+        for i in range(len(df_1_cols)):
+            if is_different(df_1_cols[i], df_2_cols[i]):
+                result.append(i)
+        return result
+
+    def df_is_exact_match(df_1, df_2):
+        df_first = df_1.copy()
+        df_second = df_2.copy()
+
+        if df_first.shape != df_second.shape: return False
+
+        mismatch_list = get_all_mismatch_dtype(df_1.dtypes, df_2.dtypes)
+        mismatch_list = [df_1.columns[x] for x in mismatch_list]
+        if len(mismatch_list) > 0:
+            print('Warning!', 'different data types found', mismatch_list)
+
+        if list(df_first.columns) != list(df_second.columns): return (False, 'different column names found')
+
+        filter_first_df = df_1.drop(columns=mismatch_list).dropna()
+        filter_second_df = df_2.drop(columns=mismatch_list).dropna()
+        comparison_df = pd.DataFrame(filter_first_df == filter_second_df)
+        true_count_in_comparison_df = comparison_df.sum().value_counts().index[0]
+
+        first_df_shape = filter_first_df.shape[0] #first or second does not matter
+        if true_count_in_comparison_df == first_df_shape: return True
+          
 
     def display_full_df(self, df):
         """show all rows from one df"""
