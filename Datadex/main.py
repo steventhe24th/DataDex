@@ -386,7 +386,7 @@ class Journal:
         for caption, df in combined.items():
             output += df.style.set_table_attributes("style='display:inline'").set_caption(caption)._repr_html_()
             output += tablespacing * "\xa0"
-        display(HTML(output))    
+        display(HTML(output))
         
 journal = Journal() 
 
@@ -479,6 +479,16 @@ class ExperimentTools:
             self.df = self.df.drop(columns=['index'])
         else:
             print('[Experiment - Error] wrong transform type')
+            
+    def push_mlflow(self, project_name):
+        for i in range(len(self.models)):
+            base_model = self.models[i].model
+            with mlflow.start_run(run_name=self.folder_name+"_"+str(base_model).split('(')[0]):
+                mlflow.log_params(base_model.get_params())
+                mlflow.log_metrics(self.models[i].metrics.iloc[0].to_dict())
+                mlflow.set_tag('user', 'IJE')
+                signature = infer_signature(self.models[i].X_train, base_model.predict(self.models[i].X_train))
+                mlflow.sklearn.log_model(base_model, project_name, signature=signature)
 
 class Experiment(ExperimentTools):
     """class for holding data, its transformation/features, and clustering model"""
