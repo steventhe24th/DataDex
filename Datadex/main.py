@@ -811,4 +811,36 @@ class Utility:
             for file in file_paths:
                 zip.write(file)
     
-        print('All files zipped successfully!') 
+        print('All files zipped successfully!')
+      
+  def check_nan(self, value):
+      if isinstance(value, str):
+          return False
+      return np.isnan(value)
+  
+  def concat_df_list(self,data_dir):
+    '''load all preprocessed data and concat'''
+    df = pd.concat([pd.read_csv(data_dir+'/'+x) for x in os.listdir(data_dir)])
+    return df
+  
+  def display_full_df(self, df):
+    """show all rows from one df"""
+    display(df.style.set_table_attributes("style='display:inline'"))
+
+  def contains_words(self, value, word_list):
+    for word in word_list:
+      if word in value:
+        return True
+    return False
+    
+  def convert_value_to_target_value(self, value, target_cols, target_value):
+      if value in target_cols:
+          return target_value
+      return value
+  
+  def create_zero_one_df(self, row_value):
+    max_index = row_value.idxmax()
+    result_list = [0 for x in range(len(row_value))]
+    result_list[max_index] = 1
+
+    return result_list      
